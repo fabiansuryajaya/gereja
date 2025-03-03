@@ -14,6 +14,8 @@
             background-color: #343a40;
             color: white;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
         .sidebar a {
             color: white;
@@ -35,7 +37,10 @@
     <div class="container_body">
         <div class="sidebar">
             <h4>Menu</h4>
-            <a href="#" class="sidebar-item" data-route="accounts">Accounts</a>
+            <a href="#" class="sidebar-item" id="accounts" data-route="accounts">Accounts</a>
+            <a href="#" class="sidebar-item" id="transactions" data-route="transactions">Transactions</a>
+            <a href="#" class="sidebar-item" id="report" data-route="report">Report</a>
+            <a href="#" class="sidebar-item" id="balance" data-route="balance">Saldo Awal</a>
         </div>
         <div class="content" id="content">
         </div>

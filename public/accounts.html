@@ -29,7 +29,6 @@
                         <th>Kode</th>
                         <th>Kategori</th>
                         <th>Sub Kategori</th>
-                        <th>Ref</th>
                         <th>Alokasi</th>
                         <th>Method</th>
                         <th>Action</th>
@@ -60,15 +59,13 @@
                         </div>
                         <div class="form-group">
                             <label for="kategori">Kategori:</label>
-                            <input type="text" class="form-control" id="kategori" required>
+                            <select class="form-control" id="kategori" required>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="sub_kategori">Sub Kategori:</label>
-                            <input type="text" class="form-control" id="sub_kategori" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="ref">Ref:</label>
-                            <input type="text" class="form-control" id="ref" required>
+                            <select class="form-control" id="sub_kategori" required>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="alokasi">Alokasi:</label>
@@ -114,10 +111,12 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        let list_accounts = {};
+        var list_accounts = {};
         $(document).ready(function() {
             // Load accounts from the server
             loadAccounts();
+            loadCategories();
+            loadSubCategories();
 
             // Show modal when Add button is clicked
             $('#addAccountBtn').on('click', function() {
@@ -133,7 +132,6 @@
                     kode: $('#kode').val(),
                     kategori: $('#kategori').val(),
                     sub_kategori: $('#sub_kategori').val(),
-                    ref: $('#ref').val(),
                     alokasi: $('#alokasi').val(),
                     method: $('#method').val(),
                     edit: $('#kode_edit').val()
@@ -182,12 +180,49 @@
             }
         });
 
+        function loadCategories() {
+            $.ajax({
+                url: '/api/categories', // Endpoint untuk mendapatkan daftar kategori
+                method: 'GET',
+                success: function(response) {
+                    const categories = response.categories;
+                    const kategoriSelect = $('#kategori');
+                    kategoriSelect.empty(); // Clear existing options
+
+                    categories.forEach(category => {
+                        kategoriSelect.append(`<option value="${category.id}">${category.name}</option>`);
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error loading categories:', xhr);
+                }
+            });
+        }
+
+        function loadSubCategories() {
+            $.ajax({
+                url: `/api/subcategories`, // Endpoint untuk mendapatkan sub kategori berdasarkan kategori
+                method: 'GET',
+                success: function(response) {
+                    const subCategories = response.subcategories;
+                    const subKategoriSelect = $('#sub_kategori');
+                    subKategoriSelect.empty(); // Clear existing options
+
+                    subCategories.forEach(subCategory => {
+                        subKategoriSelect.append(`<option value="${subCategory.id}">${subCategory.name}</option>`);
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error loading subcategories:', xhr);
+                }
+            });
+        }
+
         function clearAccounts(){
             const account_modal = $('#addAccountModal');
             account_modal.find('#kode').val('');
             account_modal.find('#kategori').val('');
             account_modal.find('#sub_kategori').val('');
-            account_modal.find('#ref').val('');
             account_modal.find('#alokasi').val('');
             account_modal.find('#method').val('debit');
             account_modal.find('#kode_edit').val('-1');
@@ -209,9 +244,8 @@
                         const row = `
                             <tr>
                                 <td>${account.kode}</td>
-                                <td>${account.kategori}</td>
-                                <td>${account.sub_kategori}</td>
-                                <td>${account.ref}</td>
+                                <td>${account.category}</td>
+                                <td>${account.subcategory}</td>
                                 <td>${account.alokasi}</td>
                                 <td>${account.method}</td>
                                 <td>

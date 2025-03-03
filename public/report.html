@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Laporan Transaksi</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Laporan Transaksi</h2>
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="fromDate">Dari Tanggal:</label>
+                <input type="date" class="form-control" id="fromDate" required>
+            </div>
+            <div class="form-group">
+                <label for="toDate">Sampai Tanggal:</label>
+                <input type="date" class="form-control" id="toDate" required>
+            </div>
+            <div class="form-group">
+                <label for="bankRef">Bank Reference:</label>
+                <select class="form-control" id="bankRef" required>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Export to Excel</button>
+        </form>
+        <div id="response" class="mt-3"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadBankReferences();
+            // set dafault value today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            $("#fromDate").val(`${year}-${month}-01`)
+            $("#toDate").val(formattedDate)
+
+            $('#reportForm').on('submit', function(e) {
+                e.preventDefault();
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+                const bankRef = $('#bankRef').val();
+
+                // Validasi tanggal
+                if (!fromDate || !toDate || !bankRef) {
+                    $('#response').text('Silakan pilih rentang tanggal dan bank reference.');
+                    return;
+                }
+
+                // Mengirim permintaan untuk mengekspor data
+                $.ajax({
+                    url: '/api/export-transactions',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ fromDate, toDate, bankRef }),
+                    success: function(response) {
+                        // Mengunduh file Excel
+                        const link = document.createElement('a');
+                        link.href = response.fileUrl; // URL file Excel yang dikembalikan dari server
+                        link.download = 'laporan_transaksi.xlsx'; // Nama file yang akan diunduh
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    },
+                    error: function(xhr) {
+                        $('#response').text(xhr.responseJSON.message);
+                    }
+                });
+            });
+        });
+
+        function loadBankReferences() {
+            $.ajax({
+                url: '/api/bank-refs', // Endpoint untuk mendapatkan daftar bank references
+                method: 'GET',
+                success: function(data) {
+                    const bankRefSelect = $('#bankRef');
+                    bankRefSelect.empty();
+                    data.refs.forEach(bank => {
+                        const option = `<option value="${bank.id}">${bank.name}</option>`;
+                        bankRefSelect.append(option);
+                    });
+                },
+                error: function(xhr) {
+                    console.error(xhr.responseJSON.message);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
