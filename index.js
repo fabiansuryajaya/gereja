@@ -9,7 +9,7 @@ const dbConfig = {
   host: 'localhost', // Ganti dengan host database Anda
   user: 'root',      // Ganti dengan username database Anda
   password: '',      // Ganti dengan password database Anda
-  database: 'greja'  // Ganti dengan nama database Anda
+  database: 'gereja'  // Ganti dengan nama database Anda
 };
 
 // Inisialisasi koneksi database

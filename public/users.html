@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Users</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Manajemen User</h2>
+
+    <form id="userForm" class="mb-4">
+      <input type="hidden" id="edit" value="-1" />
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="text" id="password" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="status" class="form-control">
+          <option value="1">Aktif</option>
+          <option value="0">Nonaktif</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Simpan</button>
+    </form>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="routes/user.js"></script>
+</body>
+</html>
+<script>
+    $(document).ready(function () {
+        loadUsers();
+      
+        $('#userForm').on('submit', function (e) {
+          e.preventDefault();
+          const username = $('#username').val();
+          const password = $('#password').val();
+          const status = $('#status').val();
+          const edit = $('#edit').val();
+      
+          $.ajax({
+            url: '/api/user',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ username, password, status, edit }),
+            success: function (res) {
+              alert(res.message);
+              resetForm();
+              loadUsers();
+            },
+            error: function (xhr) {
+              alert(xhr.responseJSON.message);
+            }
+          });
+        });
+      
+        function loadUsers() {
+          $.get('/api/users', function (res) {
+            const rows = res.users.map(user => `
+              <tr>
+                <td>${user.username}</td>
+                <td>${user.password}</td>
+                <td>${user.status == 1 ? 'Aktif' : 'Nonaktif'}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning" onclick="editUser('${user.username}', '${user.password}', ${user.status})">Edit</button>
+                </td>
+              </tr>
+            `);
+            $('#userTable').html(rows.join(''));
+          });
+        }
+      
+        window.editUser = function (username, password, status) {
+          $('#username').val(username);
+          $('#password').val(password);
+          $('#status').val(status);
+          $('#edit').val(username);
+        }
+      
+        function resetForm() {
+          $('#userForm')[0].reset();
+          $('#edit').val('-1');
+        }
+      });
+</script>

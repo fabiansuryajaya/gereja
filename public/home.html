@@ -1,78 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <title>Home</title>
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .sidebar {
-            height: 100vh;
-            background-color: #343a40;
-            color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-        }
-        .sidebar a:hover {
-            text-decoration: underline;
-        }
-        .content {
-            padding: 20px;
-            width: 100vw;
-        }
-        .container_body {
-            display: flex;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .sidebar {
+      min-height: 100vh;
+      background-color: #343a40;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h4 {
+      margin-bottom: 30px;
+      font-weight: bold;
+    }
+
+    .sidebar a {
+      color: #ffffff;
+      display: block;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #495057;
+      text-decoration: none;
+    }
+
+    .content {
+      padding: 30px;
+      background-color: #ffffff;
+      min-height: 100vh;
+    }
+
+    .container-body {
+      display: flex;
+      flex-wrap: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .container-body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container_body">
-        <div class="sidebar">
-            <h4>Menu</h4>
-            <a href="#" class="sidebar-item" id="accounts" data-route="accounts">Accounts</a>
-            <a href="#" class="sidebar-item" id="transactions" data-route="transactions">Transactions</a>
-            <a href="#" class="sidebar-item" id="report" data-route="report">Report</a>
-            <a href="#" class="sidebar-item" id="balance" data-route="balance">Saldo Awal</a>
-        </div>
-        <div class="content" id="content">
-        </div>
+  <div class="container-fluid container-body">
+    <div class="col-md-3 col-lg-2 sidebar">
+      <h4>Menu</h4>
+      <a href="#" class="sidebar-item active" id="accounts" data-route="accounts">Accounts</a>
+      <a href="#" class="sidebar-item" id="transactions" data-route="transactions">Transactions</a>
+      <a href="#" class="sidebar-item" id="report" data-route="report">Report</a>
+      <a href="#" class="sidebar-item" id="balance" data-route="balance">Saldo Awal</a>
+      <a href="#" class="sidebar-item" id="users" data-route="users">Users</a>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Inisialisasi event listener untuk sidebar
-            initializeSidebar();
+    <div class="col-md-9 col-lg-10 content" id="content">
+      <p>Silakan pilih menu di sebelah kiri untuk memuat konten.</p>
+    </div>
+  </div>
 
-            function initializeSidebar() {
-                $('.sidebar-item').off('click').on('click', function(e) {
-                    e.preventDefault();
-                    const route = $(this).data('route');
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      initializeSidebar();
+      
 
-                    // Melakukan permintaan GET ke backend
-                    $.ajax({
-                        url: `/content/${route}`, // Sesuaikan dengan rute backend Anda
-                        method: 'GET',
-                        success: function(response) {
-                            // Render konten yang diterima dari server
-                            $('#content').html(response.content); // Pastikan respons memiliki properti 'content'
-                            initializeSidebar(); // Inisialisasi ulang sidebar setelah konten baru dimuat
-                        },
-                        error: function(xhr) {
-                            $('#content').html(`<p>Error: ${xhr.responseJSON.message}</p>`);
-                        }
-                    });
-                });
+      $.ajax({
+        url: `/content/accounts`,
+        method: 'GET',
+        success: function (response) {
+          $('#content').html(response.content);
+          initializeSidebar(); // Re-bind if new content contains sidebar
+        },
+        error: function (xhr) {
+          $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.message}</div>`);
+        }
+      });
+
+
+      function initializeSidebar() {
+        $('.sidebar-item').off('click').on('click', function (e) {
+          e.preventDefault();
+          const route = $(this).data('route');
+
+          $('.sidebar-item').removeClass('active');
+          $(this).addClass('active');
+
+          $.ajax({
+            url: `/content/${route}`,
+            method: 'GET',
+            success: function (response) {
+              $('#content').html(response.content);
+              initializeSidebar(); // Re-bind if new content contains sidebar
+            },
+            error: function (xhr) {
+              $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.message}</div>`);
             }
+          });
         });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
