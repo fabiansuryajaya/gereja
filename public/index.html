@@ -72,7 +72,7 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ username, password }),
                 success: function (response) {
-                    localStorage.setItem('login', 1);
+                    localStorage.setItem('login', JSON.stringify({ username: username }));
                     window.location.href = '/home';
                 },
                 error: function (xhr) {

@@ -27,6 +27,12 @@
           <option value="0">Nonaktif</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Akses Menu (minimal satu):</label><br/>
+        <div id="menuCheckboxes" class="form-check">
+          <!-- Menu checkboxes inserted via JS -->
+        </div>
+      </div>
       <button type="submit" class="btn btn-primary">Simpan</button>
     </form>
 
@@ -36,6 +42,7 @@
           <th>Username</th>
           <th>Password</th>
           <th>Status</th>
+          <th>Menu</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -44,62 +51,108 @@
   </div>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="routes/user.js"></script>
-</body>
-</html>
-<script>
+
+  <script>
+   // console.log(allMenus_user)
+    let allMenus_user = ["accounts", "report", "transactions", "balance", "users"];
+
     $(document).ready(function () {
-        loadUsers();
-      
-        $('#userForm').on('submit', function (e) {
-          e.preventDefault();
-          const username = $('#username').val();
-          const password = $('#password').val();
-          const status = $('#status').val();
-          const edit = $('#edit').val();
-      
-          $.ajax({
-            url: '/api/user',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ username, password, status, edit }),
-            success: function (res) {
-              alert(res.message);
-              resetForm();
-              loadUsers();
-            },
-            error: function (xhr) {
-              alert(xhr.responseJSON.message);
-            }
-          });
+      renderCheckboxes();
+      loadUsers();
+
+      $('#userForm').on('submit', function (e) {
+        e.preventDefault();
+
+        const username = $('#username').val().trim();
+        const password = $('#password').val().trim();
+        const status = $('#status').val();
+        const edit = $('#edit').val();
+        const selectedMenus = [];
+
+        allMenus_user.forEach(menu => {
+          if ($('#menu_' + menu).is(':checked')) {
+            selectedMenus.push(menu);
+          }
         });
-      
-        function loadUsers() {
-          $.get('/api/users', function (res) {
-            const rows = res.users.map(user => `
+
+        if (selectedMenus.length === 0) {
+          alert('Pilih minimal satu menu.');
+          return;
+        }
+
+        const properties = { menus: selectedMenus };
+
+        $.ajax({
+          url: '/api/user',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ username, password, status, edit, properties }),
+          success: function (res) {
+            alert(res.message);
+            resetForm();
+            loadUsers();
+          },
+          error: function (xhr) {
+            alert(xhr.responseJSON.message);
+          }
+        });
+      });
+
+      function renderCheckboxes() {
+        const container = $('#menuCheckboxes');
+        container.empty();
+        allMenus_user.forEach(menu => {
+          const checkbox = `
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="menu_${menu}" value="${menu}">
+              <label class="form-check-label" for="menu_${menu}">${menu}</label>
+            </div>`;
+          container.append(checkbox);
+        });
+      }
+
+      function loadUsers() {
+        $.get('/api/users', function (res) {
+          const rows = res.users.map(user => {
+            const props = JSON.parse(user.properties || '{}');
+            const menuList = props.menus ? props.menus.join(', ') : '-';
+            return `
               <tr>
                 <td>${user.username}</td>
                 <td>${user.password}</td>
                 <td>${user.status == 1 ? 'Aktif' : 'Nonaktif'}</td>
+                <td>${menuList}</td>
                 <td>
-                  <button class="btn btn-sm btn-warning" onclick="editUser('${user.username}', '${user.password}', ${user.status})">Edit</button>
+                  <button class="btn btn-sm btn-warning" onclick='editUser(${JSON.stringify(user)})'>Edit</button>
                 </td>
-              </tr>
-            `);
-            $('#userTable').html(rows.join(''));
+              </tr>`;
           });
-        }
-      
-        window.editUser = function (username, password, status) {
-          $('#username').val(username);
-          $('#password').val(password);
-          $('#status').val(status);
-          $('#edit').val(username);
-        }
-      
-        function resetForm() {
-          $('#userForm')[0].reset();
-          $('#edit').val('-1');
-        }
-      });
-</script>
+          $('#userTable').html(rows.join(''));
+        });
+      }
+
+      window.editUser = function (user) {
+        $('#username').val(user.username);
+        $('#password').val(user.password);
+        $('#status').val(user.status);
+        $('#edit').val(user.username);
+
+        const props = JSON.parse(user.properties || '{}');
+        const menus = props.menus || [];
+
+        allMenus_user.forEach(menu => {
+          $('#menu_' + menu).prop('checked', menus.includes(menu));
+        });
+      }
+
+      function resetForm() {
+        $('#userForm')[0].reset();
+        $('#edit').val('-1');
+        allMenus_user.forEach(menu => {
+          $('#menu_' + menu).prop('checked', false);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -11,10 +11,18 @@
     }
 
     .sidebar {
-      min-height: 100vh;
-      background-color: #343a40;
-      color: white;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .logout-wrapper {
+      margin-top: auto;
+      padding-top: 20px;
+    }
+
+    .logout-wrapper {
+      bottom: 20px;
     }
 
     .sidebar h4 {
@@ -59,63 +67,112 @@
     }
   </style>
 </head>
-<body>
-  <div class="container-fluid container-body">
-    <div class="col-md-3 col-lg-2 sidebar">
-      <h4>Menu</h4>
-      <a href="#" class="sidebar-item active" id="accounts" data-route="accounts">Accounts</a>
-      <a href="#" class="sidebar-item" id="transactions" data-route="transactions">Transactions</a>
-      <a href="#" class="sidebar-item" id="report" data-route="report">Report</a>
-      <a href="#" class="sidebar-item" id="balance" data-route="balance">Saldo Awal</a>
-      <a href="#" class="sidebar-item" id="users" data-route="users">Users</a>
+<!-- ... bagian <head> tetap ... -->
+  <body>
+    <div class="container-fluid container-body">
+      <div class="col-md-3 col-lg-2 sidebar bg-dark text-light">
+        <div>
+          <h4 id="greeting">Hello,</h4>
+          <div id="menu-container">
+            <!-- Menu akan dimuat dinamis -->
+          </div>
+        </div>
+        <div class="logout">
+          <a href="#" class="sidebar-item text-danger" id="logout" onclick="logout()">Logout</a>
+        </div>
+      </div>
+  
+      <div class="col-md-9 col-lg-10 content" id="content">
+        <p>Silakan pilih menu di sebelah kiri untuk memuat konten.</p>
+      </div>
     </div>
+  
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+     
+      const allMenus = {
+        accounts: "Accounts",
+        transactions: "Transactions",
+        report: "Report",
+        balance: "Saldo Awal",
+        users: "Users"
+      };
+      
+      function logout() {
+        localStorage.removeItem('login');
+        window.location.href = '/';
+      }
 
-    <div class="col-md-9 col-lg-10 content" id="content">
-      <p>Silakan pilih menu di sebelah kiri untuk memuat konten.</p>
-    </div>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-    $(document).ready(function () {
-      initializeSidebar();
+      $(document).ready(function () {
+        const loginData = JSON.parse(localStorage.getItem('login'));
       
 
-      $.ajax({
-        url: `/content/accounts`,
-        method: 'GET',
-        success: function (response) {
-          $('#content').html(response.content);
-          initializeSidebar(); // Re-bind if new content contains sidebar
-        },
-        error: function (xhr) {
-          $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.message}</div>`);
+
+        if (!loginData || !loginData.username) {
+          return window.location.href = '/';
         }
-      });
 
-
-      function initializeSidebar() {
-        $('.sidebar-item').off('click').on('click', function (e) {
-          e.preventDefault();
-          const route = $(this).data('route');
-
-          $('.sidebar-item').removeClass('active');
-          $(this).addClass('active');
-
+        $('#greeting').text('Hello, ' + loginData.username);
+  
+        // Ambil data user berdasarkan username
+        $.get('/api/users', function (res) {
+          const currentUser = res.users.find(u => u.username === loginData.username);
+          if (!currentUser) {
+            return alert('User tidak ditemukan.');
+          }
+          console.log(loginData.username)
+          console.log(currentUser)
+          const menus = (JSON.parse(currentUser.properties || '{}').menus) || [];
+  
+          // Render menu yang tersedia
+          let html = '';
+          menus.forEach(menu => {
+            const label = allMenus[menu] || menu;
+            html += `<a href="#" class="sidebar-item" id="${menu}" data-route="${menu}">${label}</a>`;
+          });
+          $('#menu-container').html(html);
+  
+          initializeSidebar();
+  
+          // Load default konten menu pertama
+          if (menus.length > 0) {
+            const firstMenu = menus[0];
+            $('#' + firstMenu).addClass('active');
+            loadContent(firstMenu);
+          }
+        });
+  
+        function initializeSidebar() {
+          $('.sidebar-item').off('click').on('click', function (e) {
+            e.preventDefault();
+            const route = $(this).data('route');
+  
+            $('.sidebar-item').removeClass('active');
+            $(this).addClass('active');
+  
+            loadContent(route);
+          });
+        }
+  
+        function loadContent(route) {
           $.ajax({
             url: `/content/${route}`,
             method: 'GET',
             success: function (response) {
               $('#content').html(response.content);
-              initializeSidebar(); // Re-bind if new content contains sidebar
+              initializeSidebar(); // re-bind jika sidebar baru dimuat
             },
             error: function (xhr) {
-              $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON.message}</div>`);
+              $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON?.message || xhr.statusText}</div>`);
             }
           });
-        });
-      }
-    });
-  </script>
-</body>
+        }
+  
+       
+      });
+   
+    </script>
+  </body>
+  </html>
+  
 </html>
