@@ -32,7 +32,7 @@ module.exports = async function (fastify, options) {
 
     // Rute untuk membuat transaksi baru
     fastify.post('/api/transactions', async (request, reply) => {
-        const { kode_account, trx_date, no_po, keterangan, amount, method } = request.body;
+        const { kode_account, trx_date, no_po, keterangan, amount, method, username } = request.body;
         try {
             const connection = await fastify.db;
 
@@ -43,8 +43,8 @@ module.exports = async function (fastify, options) {
             }
 
             await connection.execute(
-                'INSERT INTO transactions (kode_account, trx_date, no_po, keterangan, amount, method) VALUES (?, ?, ?, ?, ?, ?)',
-                [kode_account, trx_date, no_po, keterangan, amount, account[0].method]
+                'INSERT INTO transactions (kode_account, trx_date, no_po, keterangan, amount, method, username) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [kode_account, trx_date, no_po, keterangan, amount, account[0].method, username]
             );
             return reply.send({ message: 'Transaction created successfully.' });
         } catch (error) {

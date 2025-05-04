@@ -111,6 +111,7 @@
 
                 const trxDateValue = $('#trx_date').val();
                 const formattedDate = trxDateValue.replace(/-/g, '');
+                const login = JSON.parse(localStorage.getItem('login'));
 
                 const transactionData = {
                     trx_id: $('#trx_id').val(),
@@ -119,6 +120,7 @@
                     no_po: $('#no_po').val(),
                     keterangan: $('#keterangan').val(),
                     amount: $('#amount').val(),
+                    username: login.username
                 };
 
                 const method = transactionData.trx_id ? 'PUT' : 'POST';
@@ -184,6 +186,7 @@
                 method: 'GET',
                 success: function(data) {
                     const refSelect = $('#ref');
+                    refSelect.empty();
                     data.refs.forEach(ref => {
                         const option = `<option value="${ref.id}">${ref.name}</option>`;
                         refSelect.append(option);

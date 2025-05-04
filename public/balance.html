@@ -29,6 +29,7 @@
                     <tr>
                         <th>Tahun</th>
                         <th>Nominal</th>
+                        <th>Ref</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -60,6 +61,10 @@
                             <label for="nominal">Nominal:</label>
                             <input type="number" class="form-control" id="nominal" required>
                         </div>
+                        <div class="form-group">
+                            <label for="ref">REF:</label>
+                            <select class="form-control" id="ref" required></select>
+                        </div>
                         <button type="submit" class="btn btn-primary">Save Saldo</button>
                     </form>
                     <div id="response" class="mt-3"></div>
@@ -73,6 +78,7 @@
     <script>
         $(document).ready(function() {
             loadSaldo(); // Load saldo awal saat halaman dimuat
+            loadRefs();
 
             // Show modal when Add button is clicked
             $('#addSaldoBtn').on('click', function() {
@@ -88,7 +94,8 @@
                 e.preventDefault();
                 const saldoData = {
                     tahun: $('#tahunInput').val(),
-                    nominal: $('#nominal').val()
+                    nominal: $('#nominal').val(),
+                    ref: $('#ref').val(),
                 };
 
                 const url = '/api/saldo-awal';
@@ -110,6 +117,24 @@
             });
         });
 
+        function loadRefs() {
+            $.ajax({
+                url: '/api/bank-refs', // Endpoint untuk mendapatkan daftar REF dari database bank
+                method: 'GET',
+                success: function(data) {
+                    const refSelect = $('#ref');
+                    refSelect.empty();
+                    data.refs.forEach(ref => {
+                        const option = `<option value="${ref.id}">${ref.name}</option>`;
+                        refSelect.append(option);
+                    });
+                },
+                error: function(xhr) {
+                    console.error(xhr.responseJSON.message);
+                }
+            });
+        }
+
         function loadSaldo() {
             $.ajax({
                 url: '/api/saldo-awal', // Endpoint untuk mendapatkan daftar saldo awal
@@ -122,8 +147,9 @@
                             <tr>
                                 <td>${saldo.year}</td>
                                 <td>${saldo.amount}</td>
+                                <td>${saldo.ref_name}</td>
                                 <td>
-                                    <button class="btn btn-warning btn-sm edit-btn" data-tahun="${saldo.year}">Edit</button>
+                                    <button class="btn btn-warning btn-sm edit-btn" data-tahun="${saldo.year}" data-ref="${saldo.ref}">Edit</button>
                                 </td>
                             </tr>
                         `;
@@ -139,13 +165,15 @@
         // Event listener for edit button
         $(document).on('click', '.edit-btn', function() {
             const tahun = $(this).data('tahun');
+            const ref = $(this).data('ref');
             $.ajax({
-                url: `/api/saldo-awal/${tahun}`,
+                url: `/api/saldo-awal/${ref}/${tahun}`,
                 method: 'GET',
                 success: function(saldo) {
                     $('#saldoModalLabel').text('Edit Saldo Awal');
                     $('#tahunInput').val(saldo.year);
                     $('#nominal').val (saldo.amount);
+                    $('#ref').val (saldo.ref);
                     $('#response').text('');
                     $('#saldoModal').modal('show');
                 },
@@ -158,9 +186,10 @@
         // Event listener for delete button
         $(document).on('click', '.delete-btn', function() {
             const tahun = $(this).data('tahun');
+            const ref = $(this).data('ref');
             if (confirm('Are you sure you want to delete this saldo?')) {
                 $.ajax({
-                    url: `/api/saldo-awal/${tahun}`,
+                    url: `/api/saldo-awal/${ref}/${tahun}`,
                     method: 'DELETE',
                     success: function(response) {
                         loadSaldo(); // Reload saldo after deletion

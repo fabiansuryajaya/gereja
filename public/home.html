@@ -120,8 +120,7 @@
           if (!currentUser) {
             return alert('User tidak ditemukan.');
           }
-          console.log(loginData.username)
-          console.log(currentUser)
+
           const menus = (JSON.parse(currentUser.properties || '{}').menus) || [];
   
           // Render menu yang tersedia
@@ -131,7 +130,6 @@
             html += `<a href="#" class="sidebar-item" id="${menu}" data-route="${menu}">${label}</a>`;
           });
           $('#menu-container').html(html);
-  
           initializeSidebar();
   
           // Load default konten menu pertama
@@ -143,7 +141,8 @@
         });
   
         function initializeSidebar() {
-          $('.sidebar-item').off('click').on('click', function (e) {
+          $('.sidebar-item').off('click');
+          $('.sidebar-item').on('click', function (e) {
             e.preventDefault();
             const route = $(this).data('route');
   
@@ -160,7 +159,6 @@
             method: 'GET',
             success: function (response) {
               $('#content').html(response.content);
-              initializeSidebar(); // re-bind jika sidebar baru dimuat
             },
             error: function (xhr) {
               $('#content').html(`<div class="alert alert-danger">Error: ${xhr.responseJSON?.message || xhr.statusText}</div>`);

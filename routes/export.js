@@ -13,8 +13,8 @@ module.exports = async function (fastify, options) {
 
             // get balance from fromDate year
             const [balance] = await connection.execute(
-                'SELECT * FROM balance WHERE year = ?',
-                [year]
+                'SELECT * FROM balance WHERE year = ? and ref = ?',
+                [year, bankRef]
             );
 
             let last_balance = balance.length > 0 ? balance[0].amount : 0;
@@ -81,7 +81,7 @@ module.exports = async function (fastify, options) {
             );
 
             rows.forEach((row) => {
-                last_balance = row.method == "debit" ? last_balance - row.amount : last_balance + row.amount;
+                last_balance = row.method == "kredit" ? last_balance - row.amount : last_balance + row.amount;
 
                 const trx_date = row.trx_date;//YYYYMMDD
                 
@@ -105,6 +105,7 @@ module.exports = async function (fastify, options) {
                 for (const key in mapping_rows) {
                     worksheet.getCell(key + start_row).value = mapping_rows[key];
                 }
+                start_row++;
             });
 
             const filePath = path.join(__dirname, '../exports/laporan_transaksi.xlsx');
